@@ -1,0 +1,27 @@
+[
+    {
+      "id": "tool-1",
+      "name": "工具 1",
+      "chats": [
+        {
+          "sessionId": "chat-1",
+          "name": "對話 1"
+        },
+        {
+            "sessionId": "chat-3",
+            "name": "對話 3"
+        }
+      ]
+    },
+    {
+      "id": "tool-2",
+      "name": "工具 2",
+      "chats": [
+        {
+          "sessionId": "chat-2",
+          "name": "對話 2"
+        }
+      ]
+    }
+  ]
+  

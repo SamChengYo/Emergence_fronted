@@ -1,0 +1,28 @@
+[
+    {
+      "sessionId": "chat-1",
+      "name": "對話 1",
+      "messages": [
+        { "id": 1, "content": "Hello! How can I assist you?", "role": "ai" },
+        { "id": 2, "content": "Tell me about Vue 3.", "role": "local" },
+        { "id": 3, "content": "Vue 3 is a progressive framework for building user interfaces.", "role": "ai" }
+      ]
+    },
+    {
+      "sessionId": "chat-2",
+      "name": "對話 2",
+      "messages": [
+        { "id": 1, "content": "What is Ant Design Vue?", "role": "local" },
+        { "id": 2, "content": "Ant Design Vue is a UI library for Vue.", "role": "ai" }
+      ]
+    },
+    {
+      "sessionId": "chat-3",
+      "name": "對話 3",
+      "messages": [
+        { "id": 1, "content": "What's new in JavaScript ES2023?", "role": "local" },
+        { "id": 2, "content": "ES2023 introduces new features such as Array findLast and findLastIndex.", "role": "ai" }
+      ]
+    }
+  ]
+  
