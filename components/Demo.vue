@@ -91,6 +91,7 @@ const selectedChat = ref<{ sessionId: string, name: string, messages: any[] } | 
 const isLoading = ref<boolean>(false);
 const router = useRouter();
 const selectedToolUrl = ref<string | null>(null);
+  const user = ref(null);
 
 const loadTools = async () => {
   try {
@@ -181,15 +182,49 @@ const updateMessages = (updatedMessages) => {
 
 
 
-const handleMenuClick = ({ key }: { key: string }) => {
+const handleMenuClick = async ({ key }: { key: string }) => {
   if (key === 'settings') {
     router.push('/setting');
   } else if (key === 'logout') {
-    router.push('/login');
+    try {
+      await $fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include' // 確保 Cookie 被刪除
+      });
+
+      alert('登出成功');
+      router.push('/login');
+    } catch (error: any) {
+      alert('登出失敗: ' + (error.message || '未知錯誤'));
+    }
   }
 };
 
-onMounted(loadTools);
+
+onMounted(async () => {
+  try {
+    // 透過後端 `/api/auth/me` 來檢查 `auth_token`
+    const response = await $fetch('/api/auth/me', {
+      method: 'GET',
+      credentials: 'include', // 確保發送 Cookie
+    });
+
+    if (response.success) {
+      user.value = response.user;
+      console.log('當前使用者資訊:', response.user);
+
+      // **確認登入後再載入工具**
+      await loadTools();
+    } else {
+      console.warn('登入狀態失效:', response.message);
+      router.push('/login');
+    }
+  } catch (error: any) {
+    console.error('登入狀態檢查失敗:', error.message || '未知錯誤');
+    router.push('/login');
+  }
+});
+
 </script>
 
 

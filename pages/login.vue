@@ -79,20 +79,20 @@ const form = ref<{ username?: string; email: string; password: string; remember:
 const onFinish = async () => {
   try {
     if (formMode.value === 'signup') {
-      const response = await $fetch<{ success: boolean; message: string }>('/api/auth/register', {
+      const response = await $fetch('/api/auth/register', {
         method: 'POST',
         body: form.value
       });
       alert(response.message);
       if (response.success) formMode.value = 'login';
     } else if (formMode.value === 'login') {
-      const response = await $fetch<{ success: boolean; message: string; token?: string }>('/api/auth/login', {
+      const response = await $fetch('/api/auth/login', {
         method: 'POST',
-        body: form.value
+        body: form.value,
+        credentials: 'include' // 確保 Cookie 被傳送
       });
       if (response.success) {
-        // alert(response.message);
-        if (response.token) localStorage.setItem('token', response.token);
+        alert(response.message);
         router.push('/');
       }
     }
@@ -100,6 +100,7 @@ const onFinish = async () => {
     alert('請求失敗: ' + (error.message || '未知錯誤'));
   }
 };
+
 
 const styles = computed(() => ({
   container: { margin: '0 auto', padding: '40px', width: '380px' },
