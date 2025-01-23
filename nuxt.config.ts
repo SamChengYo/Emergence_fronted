@@ -9,5 +9,11 @@ export default defineNuxtConfig({
       toggleButtonVisibility: 'always',
     }],
   ],
-  ssr: false
+  ssr: false,
+  router: {
+    middleware: ['auth']
+  },
+  runtimeConfig: {
+    jwtSecret: process.env.JWT_SECRET || 'fallback_secret'
+  }
 })
