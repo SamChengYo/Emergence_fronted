@@ -3,10 +3,15 @@ import { ref, computed } from 'vue';
 import { MailOutlined, LockOutlined, UserOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { $fetch } from 'ofetch';
+import { message } from 'ant-design-vue'; // 使用 message 組件來顯示提示訊息
 
 const router = useRouter();
 const formMode = ref<'login' | 'signup' | 'forgot'>('login');
-const form = ref<{ username?: string; email: string; password: string; remember: boolean }>({ email: '', password: '', remember: true });
+const form = ref<{ username?: string; email: string; password: string; remember: boolean }>({
+  email: '',
+  password: '',
+  remember: true
+});
 
 const onFinish = async () => {
   try {
@@ -15,8 +20,12 @@ const onFinish = async () => {
         method: 'POST',
         body: form.value
       });
-      alert(response.message);
-      if (response.success) formMode.value = 'login';
+      if (response.success) {
+        message.success(response.message, 1.5);
+        formMode.value = 'login';
+      } else {
+        message.error(response.message, 1.5);
+      }
     } else if (formMode.value === 'login') {
       const response = await $fetch('/api/auth/login', {
         method: 'POST',
@@ -24,15 +33,16 @@ const onFinish = async () => {
         credentials: 'include' // 確保 Cookie 被傳送
       });
       if (response.success) {
-        console.log(response.message);
+        message.success(response.message, 1.5);
         router.push('/');
+      } else {
+        message.error(response.message, 1.5);
       }
     }
   } catch (error: any) {
-    alert('請求失敗: ' + (error.message || '未知錯誤'));
+    message.error('請求失敗: ' + (error.message || '未知錯誤'), 1.5);
   }
 };
-
 
 const styles = computed(() => ({
   container: { margin: '0 auto', padding: '40px', width: '380px' },
@@ -56,17 +66,22 @@ const styles = computed(() => ({
             {{ formMode === 'login' ? 'Sign in' : formMode === 'signup' ? 'Sign up' : 'Forgot Password' }}
           </a-typography-title>
           <a-typography-text :style="styles.text">
-            {{ formMode === 'login' 
-              ? '歡迎使用 Agatha! 請先登入 !'
-              : formMode === 'signup'
-              ? '創建一個新帳戶'
-              : '請輸入您的電子郵件以重置密碼' }}
+            {{
+              formMode === 'login'
+                ? '歡迎使用 Agatha! 請先登入 !'
+                : formMode === 'signup'
+                ? '創建一個新帳戶'
+                : '請輸入您的電子郵件以重置密碼'
+            }}
           </a-typography-text>
         </div>
 
         <a-form layout="vertical" required-mark="optional" @finish="onFinish" :model="form">
-          <a-form-item v-if="formMode === 'signup'" name="username" 
-            :rules="[{ required: true, message: '請輸入您的使用者名稱!' }]">
+          <a-form-item
+            v-if="formMode === 'signup'"
+            name="username"
+            :rules="[{ required: true, message: '請輸入您的使用者名稱!' }]"
+          >
             <a-input v-model:value="form.username" placeholder="Username">
               <template #prefix>
                 <UserOutlined />
@@ -74,7 +89,10 @@ const styles = computed(() => ({
             </a-input>
           </a-form-item>
 
-          <a-form-item name="email" :rules="[{ required: true, type: 'email', message: '請輸入您的 Email!' }]">
+          <a-form-item
+            name="email"
+            :rules="[{ required: true, type: 'email', message: '請輸入您的 Email!' }]"
+          >
             <a-input v-model:value="form.email" placeholder="Email">
               <template #prefix>
                 <MailOutlined />
@@ -82,7 +100,11 @@ const styles = computed(() => ({
             </a-input>
           </a-form-item>
 
-          <a-form-item v-if="formMode !== 'forgot'" name="password" :rules="[{ required: true, message: '請輸入您的密碼!' }]">
+          <a-form-item
+            v-if="formMode !== 'forgot'"
+            name="password"
+            :rules="[{ required: true, message: '請輸入您的密碼!' }]"
+          >
             <a-input-password v-model:value="form.password" placeholder="Password">
               <template #prefix>
                 <LockOutlined />
@@ -102,10 +124,17 @@ const styles = computed(() => ({
 
             <div :style="styles.footer">
               <a-typography-text :style="styles.text">
-                {{ formMode === 'login' ? "還沒有帳戶嗎?" : '已經有帳戶了?' }}
+                {{ formMode === 'login' ? '還沒有帳戶嗎?' : '已經有帳戶了?' }}
               </a-typography-text>
-              <a-typography-link v-if="formMode === 'login'" @click="formMode = 'signup'"> 立即註冊</a-typography-link>
-              <a-typography-link v-if="formMode === 'signup' || formMode === 'forgot'" @click="formMode = 'login'">Sign in</a-typography-link>
+              <a-typography-link v-if="formMode === 'login'" @click="formMode = 'signup'">
+                立即註冊
+              </a-typography-link>
+              <a-typography-link
+                v-if="formMode === 'signup' || formMode === 'forgot'"
+                @click="formMode = 'login'"
+              >
+                Sign in
+              </a-typography-link>
             </div>
           </a-form-item>
         </a-form>
@@ -115,5 +144,7 @@ const styles = computed(() => ({
 </template>
 
 <style scoped>
-.layout { min-height: 100vh; }
+.layout {
+  min-height: 100vh;
+}
 </style>
