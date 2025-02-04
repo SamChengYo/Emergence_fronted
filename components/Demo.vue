@@ -21,30 +21,63 @@ const router = useRouter();
 const selectedToolUrl = ref<string | null>(null);
 const user = ref(null);
 const isloging = ref(false);
+const tool_loading = ref(true);
 
 const loadTools = async () => {
   try {
-    // 如果使用者不是管理員（例如 auth !== 0），則只取該使用者可用的工具
     let url = '/api/tools';
-    // user.value && user.value.auth !== 0
     if (user.value) {
       url += `?userId=${user.value._id}`;
     }
-    const response = await fetch(url);
+    // 以 credentials: 'include' 發送請求
+    const response = await fetch(url, { credentials: 'include' });
     const data = await response.json();
-    if (data.success) {
-      tools.value = data.tools.map(tool => ({
-        ...tool,
-        _id: tool._id.toString(),  // 確保 _id 為字串
-        users: tool.users || [],
-      }));
-    } else {
+
+    if (!data.success) {
       console.error('API Error:', data.message);
+      return;
     }
+
+    // 使用 for...of 依序處理每個 tool
+    const loadedTools = [];
+    for (const tool of data.tools) {
+      const chatsWithDetails = [];
+      // 若該工具有聊天資料，逐筆處理
+      for (const chat of (tool.chats || [])) {
+        try {
+          const chatResponse = await fetch(`/api/chats/${chat.sessionId}`, { credentials: 'include' });
+          const fullChat = await chatResponse.json();
+          chatsWithDetails.push({
+            ...chat,
+            ...fullChat,
+          });
+        } catch (error) {
+          console.error(`Error fetching chat ${chat.sessionId}:`, error);
+          chatsWithDetails.push(chat);
+        }
+      }
+      
+      // 過濾出屬於當前使用者的聊天
+      const filteredChats = chatsWithDetails.filter(chat => chat.userId === user.value._id);
+      
+      loadedTools.push({
+        ...tool,
+        _id: tool._id.toString(), // 確保 _id 為字串
+        chats: filteredChats,
+        users: tool.users || [],
+      });
+    }
+    // 將處理後的工具資料設定給 tools 變數（假設 tools 是使用 ref 定義）
+    tools.value = loadedTools;
   } catch (error) {
     console.error('Error loading tools:', error);
+  } finally {
+    tool_loading.value = false;
   }
 };
+
+
+
 
 
 const selectChat = async (sessionId: string) => {
@@ -69,29 +102,28 @@ const selectChat = async (sessionId: string) => {
 
 const addChat = async (toolId: string) => {
   try {
-    // 1. 讓 API 創建新對話
     const chatResponse = await fetch('/api/chats/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toolId })
+      body: JSON.stringify({ toolId }),
+      credentials: 'include'
     });
 
     if (!chatResponse.ok) throw new Error('Failed to create chat');
 
     const newChat = await chatResponse.json();
 
-    // 2. 在前端同步更新 tools 陣列
     const tool = tools.value.find(t => t.id === toolId);
     if (tool) {
-      tool.chats.push({ sessionId: newChat.sessionId, name: newChat.name });
-
-      // 3. 直接選擇新建立的聊天
+      // 把 userId 也塞進去
+      tool.chats.push({ sessionId: newChat.sessionId, name: newChat.name, userId: user.value._id });
       selectChat(newChat.sessionId);
     }
   } catch (error) {
     console.error('Error adding chat:', error);
   }
 };
+
 
 
 
@@ -159,12 +191,11 @@ onMounted(async () => {
 
     if (response.success) {
       user.value = response.user;
-      console.log('當前使用者資訊:', response.user);
       
-      isloging.value = true;
-
       // **確認登入後再載入工具**
       await loadTools();
+
+      isloging.value = true;
     } else {
       console.warn('登入狀態失效:', response.message);
       await logoutAndRedirect();
@@ -187,30 +218,41 @@ onMounted(async () => {
       <div class="title" v-if="!collapsed">Emergence</div>
       <hr class="divider" v-if="!collapsed" />
 
-      <!-- 動態選單 -->
-      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
-        <a-sub-menu v-for="tool in tools" :key="tool.id">
-          <template #title>
-            <span>
-              <UserAddOutlined />
-              <span v-if="!collapsed">{{ tool.name }}</span>
-            </span>
-          </template>
-
-          <!-- 新增對話按鈕 -->
-          <a-menu-item :key="`addChat-${tool.id}`" @click="addChat(tool.id)">
+    <!-- 動態選單 -->
+    <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" v-if="tool_loading">
+        <!-- 如果工具的聊天資料仍在載入，顯示 loading 動畫 -->
+        <a-menu-item key="loading" disabled>
+          <a-spin size="small" />
+          <span v-if="!collapsed" style="margin-left: 8px;">載入中...</span>
+        </a-menu-item>      
+    </a-menu>
+    <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" v-else-if="!tool_loading">
+      <a-sub-menu v-for="tool in tools" :key="tool.id">
+        <template #title>
+          <span>
             <UserAddOutlined />
-            <span v-if="!collapsed">新增對話</span>
-          </a-menu-item>
+            <span v-if="!collapsed">{{ tool.name }}</span>
+          </span>
+        </template>
 
-          <!-- 動態對話列表 -->
-          <a-menu-item v-for="item in tool.chats" :key="item.sessionId" @click="selectChat(item.sessionId)">
-            <UserAddOutlined />
-            <span v-if="!collapsed">{{ item.name }}</span>
-            <DeleteOutlined class="delete-icon" @click.stop="deleteChat(tool.id, item.sessionId)" />
-          </a-menu-item>
-        </a-sub-menu>
-      </a-menu>
+        <!-- 新增對話按鈕 -->
+        <a-menu-item :key="`addChat-${tool.id}`" @click="addChat(tool.id)">
+          <UserAddOutlined />
+          <span v-if="!collapsed">新增對話</span>
+        </a-menu-item>
+
+        <!-- 當聊天資料載入完成後，顯示對話列表 -->
+        <a-menu-item 
+          v-for="item in tool.chats" 
+          :key="item.sessionId" 
+          @click="selectChat(item.sessionId)">
+          <UserAddOutlined />
+          <span v-if="!collapsed">{{ item.name }}</span>
+          <DeleteOutlined class="delete-icon" @click.stop="deleteChat(tool.id, item.sessionId)" />
+        </a-menu-item>
+      </a-sub-menu>
+    </a-menu>
+    
     </a-layout-sider>
 
     <a-layout>

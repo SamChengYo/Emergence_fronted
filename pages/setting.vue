@@ -219,7 +219,6 @@ onMounted(async () => {
       formState.value.email = response.user.email;
       formState.value.role = response.user.auth === 0 ? 'admin' : 'user';
       formState.value.avatar = response.user.avatar || formState.value.avatar;
-      // 若需要其他初始化資料，可在此處加入
     } else {
       console.warn('登入狀態失效:', response.message);
       await logoutAndRedirect();
@@ -278,7 +277,7 @@ onMounted(async () => {
           </a-button>
         </a-form-item>
         <!-- 管理工具 -->
-        <a-form-item label="管理工具">
+        <a-form-item label="管理工具" v-if="formState.role === 'admin'">
           <a-button type="primary" @click="openToolManagement">管理工具</a-button>
         </a-form-item>
       </a-form>
