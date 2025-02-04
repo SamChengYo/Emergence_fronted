@@ -10,6 +10,7 @@ import {
   DeleteOutlined
 } from '@ant-design/icons-vue';
 import Chat from '@/components/Chat.vue';
+import { message } from 'ant-design-vue';
 import { set } from 'mongoose';
 
 const selectedKeys = ref<string[]>([]);
@@ -167,7 +168,7 @@ const logoutAndRedirect = async () => {
 
     router.push('/login');
   } catch (error: any) {
-    alert('登出失敗: ' + (error.message || '未知錯誤'));
+    message.error(('登出失敗: ' + (error.message || '未知錯誤')), 1.5);
   }
 };
 

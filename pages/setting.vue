@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
 
 // 表單狀態（新增 fullName 欄位）
 const formState = ref({
@@ -100,13 +101,11 @@ const okToolSettings = async () => {
         if (index !== -1) {
           availableTools.value[index].users = selectedToolUsers.value;
         }
-        console.log('工具設定更新成功');
       } else {
-        alert(result.message || '更新工具設定失敗');
+        message.error((result.message || '更新工具設定失敗'), 1.5);
       }
     } catch (error) {
-      console.error('更新工具設定錯誤:', error);
-      alert('更新工具設定發生錯誤');
+      message.error((error.message || '更新工具設定失敗'), 1.5);
     }
   }
   // 無論有無變更，按 OK 都關閉 Modal
@@ -116,7 +115,7 @@ const okToolSettings = async () => {
 // 新增工具：呼叫後端 API 新增工具（使用 /api/select_tools 這個 API）
 const addTool = async () => {
   if (!newToolName.value.trim() || !newToolUrl.value.trim()) {
-    alert('請輸入工具名稱及 URL');
+    message.warning('請輸入工具名稱及 URL', 1.5);
     return;
   }
   try {
@@ -136,13 +135,13 @@ const addTool = async () => {
       });
       newToolName.value = '';
       newToolUrl.value = '';
-      console.log('工具新增成功');
+      message.success('新增工具成功', 1.5);
     } else {
-      alert(result.message || '新增工具失敗');
+      message.error((result.message || '新增工具失敗'), 1.5);
     }
   } catch (error) {
     console.error('新增工具錯誤:', error);
-    alert('新增工具發生錯誤');
+    message.error('新增工具發生錯誤', 1.5);
   }
 };
 
@@ -157,13 +156,13 @@ const deleteTool = async (tool) => {
       availableTools.value = availableTools.value.filter(
         (t) => t._id !== tool._id
       );
-      console.log('工具已刪除');
+      message.success('刪除工具成功', 1.5);
     } else {
-      alert(result.message || '刪除工具失敗');
+      message.error((result.message || '刪除工具失敗'), 1.5);
     }
   } catch (error) {
     console.error('刪除工具錯誤:', error);
-    alert('刪除工具發生錯誤');
+    message.error('刪除工具發生錯誤', 1.5);
   }
 };
 
@@ -180,6 +179,7 @@ const loadAllTools = async () => {
     }
   } catch (error) {
     console.error('載入工具錯誤:', error);
+    message.error((error.message || '載入工具發生錯誤'), 1.5);
   }
 };
 
@@ -198,6 +198,7 @@ const loadAvailableUsers = async (search = '') => {
     }
   } catch (error) {
     console.error('載入使用者錯誤:', error);
+    message.error('載入使用者發生錯誤', 1.5);
   }
 };
 
@@ -221,6 +222,7 @@ onMounted(async () => {
       formState.value.avatar = response.user.avatar || formState.value.avatar;
     } else {
       console.warn('登入狀態失效:', response.message);
+      message.warning('登入狀態失效，請重新登入', 1.5);
       await logoutAndRedirect();
     }
   } catch (error) {
@@ -228,6 +230,7 @@ onMounted(async () => {
       '登入狀態檢查失敗:',
       error.message || '未知錯誤'
     );
+    message.error('登入狀態檢查失敗，請重新登入', 1.5);
     await logoutAndRedirect();
   }
 });
