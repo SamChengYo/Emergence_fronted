@@ -1,40 +1,3 @@
-<template>
-  <a-row justify="center">
-    <a-col :span="16">
-      <a-card>
-        <!-- 聊天框 -->
-        <div class="chat-box" ref="chatBox">
-          <div v-for="msg in userMessages" :key="msg.id" :class="['bubble', msg.role]">
-            <a-avatar :style="{ background: msg.role === 'ai' ? '#fde3cf' : '#87d068' }">
-              <UserOutlined />
-            </a-avatar>
-            <span class="message">{{ msg.content }}</span>
-          </div>
-        </div>
-
-        <!-- 輸入區 -->
-        <div class="input-area">
-          <a-textarea
-            v-model:value="inputMessage"
-            placeholder="輸入訊息..."
-            class="custom-input"
-            :disabled="isStreaming"
-            @keydown.enter.prevent="sendMessage"
-          />
-          <a-button type="primary" class="send-btn" @click="isStreaming ? abortStreaming() : sendMessage()">
-            <template v-if="isStreaming">
-              <CloseOutlined />
-            </template>
-            <template v-else>
-              <SendOutlined />
-            </template>
-          </a-button>
-        </div>
-      </a-card>
-    </a-col>
-  </a-row>
-</template>
-
 <script setup>
 import { ref, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
 import { UserOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons-vue";
@@ -212,7 +175,42 @@ onBeforeUnmount(() => {
 });
 </script>
 
+<template>
+  <a-row justify="center">
+    <a-col :span="16">
+      <a-card>
+        <!-- 聊天框 -->
+        <div class="chat-box" ref="chatBox">
+          <div v-for="msg in userMessages" :key="msg.id" :class="['bubble', msg.role]">
+            <a-avatar :style="{ background: msg.role === 'ai' ? '#fde3cf' : '#87d068' }">
+              <UserOutlined />
+            </a-avatar>
+            <span class="message">{{ msg.content }}</span>
+          </div>
+        </div>
 
+        <!-- 輸入區 -->
+        <div class="input-area">
+          <a-textarea
+            v-model:value="inputMessage"
+            placeholder="輸入訊息..."
+            class="custom-input"
+            :disabled="isStreaming"
+            @keydown.enter.prevent="sendMessage"
+          />
+          <a-button type="primary" class="send-btn" @click="isStreaming ? abortStreaming() : sendMessage()">
+            <template v-if="isStreaming">
+              <CloseOutlined />
+            </template>
+            <template v-else>
+              <SendOutlined />
+            </template>
+          </a-button>
+        </div>
+      </a-card>
+    </a-col>
+  </a-row>
+</template>
 
 <style scoped>
 /* 聊天框 */

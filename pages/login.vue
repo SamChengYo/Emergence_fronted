@@ -1,3 +1,51 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { MailOutlined, LockOutlined, UserOutlined } from '@ant-design/icons-vue';
+import { useRouter } from 'vue-router';
+import { $fetch } from 'ofetch';
+
+const router = useRouter();
+const formMode = ref<'login' | 'signup' | 'forgot'>('login');
+const form = ref<{ username?: string; email: string; password: string; remember: boolean }>({ email: '', password: '', remember: true });
+
+const onFinish = async () => {
+  try {
+    if (formMode.value === 'signup') {
+      const response = await $fetch('/api/auth/register', {
+        method: 'POST',
+        body: form.value
+      });
+      alert(response.message);
+      if (response.success) formMode.value = 'login';
+    } else if (formMode.value === 'login') {
+      const response = await $fetch('/api/auth/login', {
+        method: 'POST',
+        body: form.value,
+        credentials: 'include' // 確保 Cookie 被傳送
+      });
+      if (response.success) {
+        console.log(response.message);
+        router.push('/');
+      }
+    }
+  } catch (error: any) {
+    alert('請求失敗: ' + (error.message || '未知錯誤'));
+  }
+};
+
+
+const styles = computed(() => ({
+  container: { margin: '0 auto', padding: '40px', width: '380px' },
+  footer: { marginTop: '24px', textAlign: 'center', width: '100%' },
+  forgotPassword: { float: 'right', cursor: 'pointer', color: '#1890FF' },
+  header: { marginBottom: '32px', textAlign: 'center' },
+  section: { alignItems: 'center', backgroundColor: '#f5f5f5', display: 'flex', height: '100vh', padding: '80px 0px' },
+  text: { color: '#8c8c8c' },
+  title: { fontSize: '24px' },
+  logo: { width: '100px', marginBottom: '16px' },
+}));
+</script>
+
 <template>
   <a-layout class="layout">
     <a-layout-content :style="styles.section">
@@ -65,54 +113,6 @@
     </a-layout-content>
   </a-layout>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { MailOutlined, LockOutlined, UserOutlined } from '@ant-design/icons-vue';
-import { useRouter } from 'vue-router';
-import { $fetch } from 'ofetch';
-
-const router = useRouter();
-const formMode = ref<'login' | 'signup' | 'forgot'>('login');
-const form = ref<{ username?: string; email: string; password: string; remember: boolean }>({ email: '', password: '', remember: true });
-
-const onFinish = async () => {
-  try {
-    if (formMode.value === 'signup') {
-      const response = await $fetch('/api/auth/register', {
-        method: 'POST',
-        body: form.value
-      });
-      alert(response.message);
-      if (response.success) formMode.value = 'login';
-    } else if (formMode.value === 'login') {
-      const response = await $fetch('/api/auth/login', {
-        method: 'POST',
-        body: form.value,
-        credentials: 'include' // 確保 Cookie 被傳送
-      });
-      if (response.success) {
-        alert(response.message);
-        router.push('/');
-      }
-    }
-  } catch (error: any) {
-    alert('請求失敗: ' + (error.message || '未知錯誤'));
-  }
-};
-
-
-const styles = computed(() => ({
-  container: { margin: '0 auto', padding: '40px', width: '380px' },
-  footer: { marginTop: '24px', textAlign: 'center', width: '100%' },
-  forgotPassword: { float: 'right', cursor: 'pointer', color: '#1890FF' },
-  header: { marginBottom: '32px', textAlign: 'center' },
-  section: { alignItems: 'center', backgroundColor: '#f5f5f5', display: 'flex', height: '100vh', padding: '80px 0px' },
-  text: { color: '#8c8c8c' },
-  title: { fontSize: '24px' },
-  logo: { width: '100px', marginBottom: '16px' },
-}));
-</script>
 
 <style scoped>
 .layout { min-height: 100vh; }
